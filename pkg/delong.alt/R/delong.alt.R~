@@ -1,0 +1,66 @@
+auc.hajek <- function(x,y,F=NULL,G=NULL,auc=NULL,terms.only=TRUE,IID=FALSE) {
+    if(is.null(F)) F <- ecdf(x)
+    if(is.null(G)) G <- ecdf(y)
+    if(is.null(auc)) auc <- auc.hat(x,y)
+    terms <- list(control = -(G(x)-c(1-auc)), case = F(y)-c(auc))
+    if(terms.only) {
+        if(IID) {
+            ## stopifnot(terms.only)
+            n.0 <- length(x); n.1 <- length(y)
+            n <- n.0+n.1
+            ## g <- c(rep(0,n.0),rep(1,n.1))
+            return(c(terms$control*n/n.0,terms$case*n/n.1))
+        } else  return(terms)
+    }
+    return(sum(sapply(terms,mean)))
+}
+
+
+#' An asymptotically equivalent linear representation of the index AUC
+#'
+#' This routine computes the linearization of the index AUC as
+#' described in the method section of the referenced
+#' manuscript. Besides the data (W,D) and estimated coefficient
+#' vector, the parameters include two functions. The parameter infl.fn
+#' computes an influence function for the estimate of the coefficient
+#' vector. The only obligatory parameters are the data, W and D. The
+#' parameter deriv.fn returns the derivative of the AUC at a point
+#' beta. Its obligatory parameters are the data, W and D, and the
+#' point beta. If deriv.fn==NULL the derivative is numerically
+#' estimated using numDeriv::grad.
+#'
+#' The simulation and data analysis routines supplied with the
+#' referenced manuscript give examples of the use of this routine for
+#' nonparametric inference on the difference of AUCs. Also supplied
+#' there are examples of infl.fn and deriv.fn for various models such
+#' as LDA and probit regression.
+#'
+#' @param w matrix of observed covariates, one vector of covariate per
+#'     row
+#' @param d vector of 0s and 1s, corresponding to units' control/case
+#'     status
+#' @param beta the estimated coefficient vector for the index AUC
+#' @param infl.fn the influence function for beta; see details for
+#'     specification
+#' @param deriv.fn NULL or the derivative of the AUC at the true beta; see
+#'     details for specification
+#'
+#' @return a vector consisting of the terms of the linearization, as
+#'     many terms as there are units (==length(w))
+#'
+#' @seealso "Alexis Doyle-Connolly and Haben Michael, Nonparametric Estimation of the # AUC of an Index with Estimated Parameters (2023)."
+#'
+#' @export
+
+auc.index.linearize <- function(w,d,beta,infl.fn,deriv.fn=NULL) {
+    n <- nrow(w)
+    x <- w[d==0,]; y <- w[d==1,]
+    if(is.null(deriv.fn)) deriv.fn <- function(w,d,beta)numDeriv::grad(function(u)auc.hat(x%*%u,y%*%u),beta,method='simple',method.args=list(eps=1/n^(.5))) 
+    approx.1 <- auc.hajek(x%*%beta,y%*%beta,terms.only=TRUE,IID=TRUE)
+    infl.hat <- infl.fn(w,d)
+    deriv.hat <- deriv.fn(w,d,beta)
+    approx.2 <- deriv.hat%*%infl.hat
+    approx <- as.numeric(approx.1+approx.2)
+}
+
+

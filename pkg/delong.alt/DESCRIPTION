@@ -1,0 +1,18 @@
+Package: delong.alt
+Title: Nonparametric inference on the Index AUC with estimated parameters
+Version: 0.0.0.9000
+Authors@R:
+	    person(given = "Haben",	
+            family = "Michael",	
+	    role = c("aut", "cre"),
+	    email = "hmichael@math.umass.edu")	
+Description: This package contains a routine to approximate an exact confidence interval for a linear combination of a multinomial parameter. Also provided are routines for testing and visualization.
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3.9000
+Imports:
+	numDeriv (>= 8.1.1)
+
